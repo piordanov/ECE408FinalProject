@@ -14,3 +14,5 @@ git commit
 //you will then have to write some message, and to save you have to type :wq
 git push
 
+At this point, there is a possibility of conflicts, if someone else has pushed changes that you have not pulled yet. Depending on the conflicts, "git merge" or manually merging changes may be necessary.
+
