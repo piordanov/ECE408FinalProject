@@ -16,3 +16,7 @@ git push
 
 At this point, there is a possibility of conflicts, if someone else has pushed changes that you have not pulled yet. Depending on the conflicts, "git merge" or manually merging changes may be necessary.
 
+To override local commits: from http://stackoverflow.com/questions/1125968/force-git-to-overwrite-local-files-on-pull
+git fetch --all
+git reset --hard origin/master
+
