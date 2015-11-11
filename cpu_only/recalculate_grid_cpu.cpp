@@ -12,6 +12,7 @@
  *                          and writes it to the output grid */
 
 #include <cstring>
+#include <cmath>  // needed for pow
 
 void recalculate_grid_cpu
 (
@@ -52,6 +53,14 @@ void recalculate_grid_cpu
     // else has a question, they will know who to ask ;)
     
     // remove the line below, it just copies the input to the output ;)
+    // Laura: judging by the memcpy line below, to cover extra (x%8) cells at the end of a
+    // line, there is an extra char to hold that info
+    // For example, if there are 65 cells in one horizontal line of the grid, there must be
+    // 9 chars to hold them; 64 cells->8 chars, 63 cells->8 chars
+    // So, to access any cell (x,y): input_cell_grid[y * ((width-1)/8 +1) + x/8] is the right char
+    // and 2^(x%8) gives you the correct power-of-2 mask to use on the char
+    // If the result is not zero, that means that the cell in question is alive:
+    // cell_alive = (input_cell_grid[y*((width-1)/8+1) + x/8] & pow(2.0, (double)(x%8))) != 0;
     memcpy(output_cell_grid, input_cell_grid, ((width - 1) / 8 + 1) * height * sizeof(char));
 
 }
