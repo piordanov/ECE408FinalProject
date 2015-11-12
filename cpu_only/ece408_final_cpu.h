@@ -58,6 +58,23 @@ int main(int argc, char** argv);
  *
  *** Side Effects ***
  *  TODO - Laura or Peter */
+bool get_cell
+(
+    const unsigned char* input_cell_grid,
+    int x,
+    int y,
+    unsigned width,
+    unsigned height
+);
+void write_cell
+(
+	bool alive,
+	int x,
+	int y,
+	unsigned width,
+	unsigned height,
+	unsigned char* output_cell_grid
+);
 void recalculate_grid_cpu
 (
     unsigned char* output_cell_grid,

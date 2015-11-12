@@ -5,6 +5,9 @@ Our set up steps:
 to load cuda compiler
 module load cuda-toolkit
 
+To run the CPU-only version of the code:
+make -j valgrind
+
 set up rules:
 git clone git@github.com:piordanov/ECE408FinalProject.git
 
