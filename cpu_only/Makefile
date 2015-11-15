@@ -3,7 +3,7 @@ EXENAME=life_cpu
 COMPILEFLAGS=-Wall -Wfatal-errors -g -fopenmp
 LINKFLAGS=-Wall -Wfatal-errors -g -fopenmp
 LIBS=-lpng
-ARGS=256x256.png output 256
+ARGS=256x256.png output 1
 
 all: $(EXENAME)
 
@@ -21,7 +21,7 @@ main.o: main.cpp ece408_final_cpu.h
 pngrw.o: pngrw.cpp pngrw.h
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
-recalculate_grid_cpu.o: recalculate_grid_cpu_03_inline_and_lut.cpp
+recalculate_grid_cpu.o: recalculate_grid_cpu_03*.cpp
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
 utility.o: utility.cpp

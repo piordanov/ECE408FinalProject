@@ -137,36 +137,29 @@ void recalculate_grid_cpu
     unsigned height
 ){
     
-    // almost unnecessary to check for this, but it's a good idea for team projects
-    if (width == 0)
+    // too lazy to support useless edge cases... but check for them at least
+    // if you want to add support for grids with a width or height of dimension 1,
+    // you can replace the error message with some specialized functions and return when done
+    if (width < 9 || height < 2)
     {
-        fprintf(stderr, "Warning! recalculate_grid_cpu() called with width = 0\n");
+        fprintf(stderr, "Error! recalculate_grid_cpu() called with dimension < 2\n");
         return;
     }
-    if (height == 0)
-    {
-        fprintf(stderr, "Warning! recalculate_grid_cpu() called with height = 0\n");
-        return;
-    }
+    
+    // below this line, the cell grid shall have minimum width 2 and height 2
     
     unsigned bytes_per_row = (width - 1) / 8 + 1;
     
-    // below this line, I guarentee that:
-    //      width >= 1
-    // and  height >= 1
-    
-    unsigned char nw,   n,      ne;
-    unsigned char w,    c,      e;
-    unsigned char sw,   s,      se;
-    
-    // TODO - Conor, please compute the perimiter cells of the output
-    
-    // compute main body - optimizing out boundary checks :)
+    unsigned char nw, n, ne;
+    unsigned char w,  c, e;
+    unsigned char sw, s, se;
+        
+    // compute main body - optimizing out boundary checks ;)
     // ix and iy select the byte being written
     for (unsigned iy = 1, bound_x = bytes_per_row - 1, bound_y = height - 1; iy < bound_y; iy++)
     {
         
-        const unsigned char* row_above = input_cell_grid + (iy - 1);
+        const unsigned char* row_above = input_cell_grid + bytes_per_row * (iy - 1);
         const unsigned char* row_mid = row_above + bytes_per_row;
         const unsigned char* row_below = row_above + 2 * bytes_per_row;
         
@@ -191,6 +184,6 @@ void recalculate_grid_cpu
         }
         
     }
-
+    
 }
 
