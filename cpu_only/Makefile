@@ -1,14 +1,14 @@
 COMPILER=g++
 EXENAME=life_cpu
-COMPILEFLAGS=-Wall -Wfatal-errors -g
-LINKFLAGS=-Wall -Wfatal-errors -g
+COMPILEFLAGS=-Wall -Wfatal-errors -g -fopenmp
+LINKFLAGS=-Wall -Wfatal-errors -g -fopenmp
 LIBS=-lpng
-ARGS=test_input_01.png 12
+ARGS=256x256.png output 256
 
 all: $(EXENAME)
 
 # add additional .o files after main.o
-$(EXENAME): main.o pngrw.o recalculate_grid_cpu.o timing.o
+$(EXENAME): main.o pngrw.o recalculate_grid_cpu.o utility.o
 	$(COMPILER) $(LINKFLAGS) -o $(EXENAME) $^ $(LIBS)
 
 #########################
@@ -21,20 +21,22 @@ main.o: main.cpp ece408_final_cpu.h
 pngrw.o: pngrw.cpp pngrw.h
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
-recalculate_grid_cpu.o: recalculate_grid_cpu.cpp
+recalculate_grid_cpu.o: recalculate_grid_cpu_03_inline_and_lut.cpp
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
-timing.o: timing.cpp
+utility.o: utility.cpp
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
 #########################
 
 clean:
-	rm -fv generation*.png *.o $(EXENAME)
+	rm -fv output*.png *.o $(EXENAME)
 
 run: $(EXENAME)
+	rm -rf output*.png
 	./$(EXENAME) $(ARGS)
 
 valgrind: $(EXENAME)
+	rm -rf output*.png
 	valgrind --leak-check=full ./$(EXENAME) $(ARGS)
 

@@ -12,69 +12,10 @@
 #ifndef __HEADER_GUARD_ECE408_FINAL__
 #define __HEADER_GUARD_ECE408_FINAL__
 
-/*** Function Name ***
- *  main
- *
- *** Function Description ***
- *      Launches a Game of Life simulation by loading an intial cell grid from a png file
- *  and simulating a specified number of generations.  Each generation is written to an
- *  output png file
- *
- *** Inputs ****
- *  argc    -   The number of arguments passed to main() and the number of strings in argv
- *  argv[1] -   Path to a png file which specifies the inital cell grid
- *  argv[2] -   The number of iterations to simulate.  Must be at least 1
- *
- *** Outputs ***
- *  none
- *
- *** Returns ***
- *  0       if program completed successfully
- *  else    if program encountered an error
- *
- *** Assumptions - Function is allowed to crash if any of the following aren't met ***
- *  None - Function must behave correctly under all conditions.
- *
- *** Side Effects ***
- *  None */
+/* main.cpp */
 int main(int argc, char** argv);
 
-/*** Function Name ***
- *  recalculate_grid_cpu
- *
- *** Function Description ***
- *      TODO - Laura or Peter
- *
- *** Inputs ****
- *      input_cell_grid TODO - Laura or Peter
- *      width   - The number of cells across a row of the cell grid.  8 cells = 1 byte
- *      height  - The number of cells down a column of a cell grid.
- *      
- *** Outputs ***
- *  output_cell_grid TODO - Laura or Peter
- *
- *** Assumptions - Function is allowed to crash if any of the following aren't met ***
- *  TODO - Laura or Peter
- *
- *** Side Effects ***
- *  TODO - Laura or Peter */
-bool get_cell
-(
-    const unsigned char* input_cell_grid,
-    int x,
-    int y,
-    unsigned width,
-    unsigned height
-);
-void write_cell
-(
-	bool alive,
-	int x,
-	int y,
-	unsigned width,
-	unsigned height,
-	unsigned char* output_cell_grid
-);
+/* recalculate_grid_cpu.cpp */
 void recalculate_grid_cpu
 (
     unsigned char* output_cell_grid,
@@ -83,7 +24,29 @@ void recalculate_grid_cpu
     unsigned height
 );
 
-/* Returns the number of seconds since some unknown epoch with microsecond precision */
+/* utility.cpp */
+// get current time in seconds
 double get_timestamp();
+
+// simple class for generating output filenames
+class output_filename_t
+{
+    public:
+        
+        char* str;
+        
+        // constructors, assignment, destructor
+        output_filename_t(const char* output_pattern, unsigned iterations);
+        output_filename_t(const output_filename_t& rhs);
+        output_filename_t& operator=(const output_filename_t& rhs);
+        ~output_filename_t();
+        
+        bool next_filename();
+        
+    private:
+        
+        unsigned digit_end;  // 9 if str = "output_042.png", for example
+        unsigned len;        // 14 if str = "output_042.png", for example
+};
 
 #endif // header guard

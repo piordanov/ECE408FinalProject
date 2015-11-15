@@ -14,7 +14,7 @@
  *                          threaded
  *
  *                          Valid Command Line Usages:
- *                              ./life_cpu [initial_grid.png] [iterations] */
+ *                              ./life_cpu [initial_grid.png] [output_pattern] [iterations] */
 
 #include <cstdlib>
 #include <cstdio>
@@ -23,40 +23,37 @@
 #include "pngrw.h"
 #include "ece408_final_cpu.h"
 
-unsigned first_filename(unsigned iterations, char** output_filename);
-void next_filename(unsigned digit, char* output_filename);
-
 int main(int argc, char** argv)
 {
     
     // abort if the user didn't pass the correct number of command line args
-    if (argc != 3)
+    if (argc != 4)
     {
         
         fprintf
         (
             stderr,
             "Error! Invalid command line arguments.\n"
-            "Usage: %s [initial_grid.png] [iterations]\n",
+            "Usage: %s [initial_grid.png] [output_pattern] [iterations]\n",
             argv[0]
         );
         
         return -1;
         
-    } else if (argc > 3) {
+    } else if (argc > 4) {
         
         fprintf
         (
             stderr,
-            "Warning! Ignoring all but the first 2 command line arguments\n"
-            "Usage: %s [initial_grid.png] [iterations]\n",
+            "Warning! Ignoring all but the first 3 command line arguments\n"
+            "Usage: %s [initial_grid.png] [output_pattern] [iterations]\n",
             argv[0]
         );
         
     }
     
     // detect the number of iterations
-    int iterations = atoi(argv[2]);
+    unsigned iterations = atoi(argv[3]);
     if (iterations < 1)
     {
         fprintf(stderr, "Error! Iteration count must be at least 1\n");
@@ -77,35 +74,43 @@ int main(int argc, char** argv)
         // error messages printed from inside pngrw_read_file()
         return -1;
     
+    if (width < 2)
+    {
+        fprintf(stderr, "Error! %s must have a width > 1\n", argv[1]);
+        return -1;
+    }
+    
+    if (height < 2)
+    {
+        fprintf(stderr, "Error! %s must have a height > 1\n", argv[1]);
+        return -1;
+    }
+    
     // we're double buffering, pngrw_read_file only allocated the input buffer
     cell_grid_write = new unsigned char[bytes];
+    // need to init to 0 so valgrind won't complain (it can't track single-bit initializations)
+    memset(cell_grid_write, 0, bytes);
     
     // simulate the cell grid for 'iterations' steps
-    char* output_filename;
-    unsigned digit = first_filename(iterations, &output_filename);
+    output_filename_t output_filename(argv[2], iterations);
     
-    double compute_elapsed_sec = 0.0;
-    
-    printf("first (live) = %u, second (dead) = %u\n", cell_grid_read[0] & 0x1, (cell_grid_read[0] & 0x2) >> 1);
-    
-    for (int ix = 0; ix < iterations; ix++)
+    double start = get_timestamp();
+    for (unsigned ix = 0; ix < iterations; ix++)
     {
         
         // simulate one time step (generation)
-        double start = get_timestamp();
         recalculate_grid_cpu(cell_grid_write, cell_grid_read, width, height);
-        compute_elapsed_sec += get_timestamp() - start;
         
         // write the new cell grid to a png file
         pngrw_write_file
         (
-            output_filename,
+            output_filename.str,
             cell_grid_write,
             width,
             height
         );
         
-        next_filename(digit, output_filename);
+        output_filename.next_filename();
         
         // swap buffers
         unsigned char* swap = cell_grid_read;
@@ -113,64 +118,21 @@ int main(int argc, char** argv)
         cell_grid_write = swap;
         
     }
+    double elapsed_sec = get_timestamp() - start;
     
     // cleanup
-    delete[] output_filename;
     delete[] cell_grid_read;
     delete[] cell_grid_write;
     
-    setlocale(LC_NUMERIC, ""); // for thousands separator
     printf
     (
-        "Success! Finished %u iterations in %lf seconds (%'u cells/sec)\n",
+        "Success! Finished %u iterations in %lf seconds (%lf cells/sec)\n",
         iterations,
-        compute_elapsed_sec,
-        (unsigned)((double)(width * height * iterations) / compute_elapsed_sec)
+        elapsed_sec,
+        ((double)width * (double)height * (double)iterations) / elapsed_sec
     );
     
     return 0;
     
-}
-
-// creates filenames such as generation_00.png for iteration counts between 10 and 99
-// generation_000.png for 100 to 999 etc
-// returns the index of the 1's digit in the generated string
-unsigned first_filename(unsigned iterations, char** output_filename)
-{
-    
-    unsigned digits = 0;
-    while (iterations != 0)
-    {
-        digits++;
-        iterations /= 10;
-    }
-    
-    *output_filename = new char[digits + 16];
-    
-    memcpy(*output_filename, "generation_", 11 * sizeof(char));
-    memset(*output_filename + 11, '0', digits * sizeof(char));
-    memcpy(*output_filename + 11 + digits, ".png", 5);
-    
-    return digits + 10;
-    
-}
-
-// increments the numerical part of the output filename
-void next_filename(unsigned digit, char* output_filename)
-{
-    while (true)
-    {
-        char fetch = output_filename[digit];
-        fetch++;
-        if (fetch > '9')
-        {
-            fetch = '0';
-            output_filename[digit] = fetch;
-            digit--;
-        } else {
-            output_filename[digit] = fetch;
-            return;
-        }
-    }
 }
 
