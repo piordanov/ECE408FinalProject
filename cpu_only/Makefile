@@ -3,7 +3,7 @@ EXENAME=life_cpu
 COMPILEFLAGS=-Wall -Wfatal-errors -g -fopenmp
 LINKFLAGS=-Wall -Wfatal-errors -g -fopenmp
 LIBS=-lpng
-ARGS=256x256.png output 1
+ARGS=1x1.png output 1
 
 all: $(EXENAME)
 

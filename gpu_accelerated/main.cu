@@ -58,7 +58,7 @@ int main(int argc, char** argv)
     
     // blocking copy initial grid to GPU
     cudaMemcpy(read_grid_d, send_grid_h, grid_bytes * sizeof(char), cudaMemcpyHostToDevice);
-    
+
     // we're done with the CPU's copy of the input grid
     delete[] send_grid_h;
     
@@ -91,7 +91,7 @@ int main(int argc, char** argv)
         unsigned char* swap = read_grid_d;
         read_grid_d = write_grid_d;
         write_grid_d = swap;
-        
+
     }
     
     /* Stage 4 - cleanup */
