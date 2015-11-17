@@ -1,24 +1,34 @@
 COMPILER=nvcc # /usr/local/cuda/bin/nvcc for most machines, but nvcc for EWS
-EXENAME=life_gpu
+EXENAME1=life_gpu_01
+EXENAME2=life_gpu_02
 COMPILEFLAGS=-Xcompiler=-Wall,-Wfatal-errors -G -g
 LINKFLAGS=-Xcompiler=-Wall,-Wfatal-errors -G -g
 LIBS=-lpng
-ARGS=16x16.png output 50
+ARGS=256x256.png output 10
 
-all: $(EXENAME)
+all: $(EXENAME1) $(EXENAME2)
 
-# add additional .o files on the line below (after main.o)
-$(EXENAME): main.o pngrw.o utility.o kernel.o
-	$(COMPILER) $(LINKFLAGS) -o $(EXENAME) $^ $(LIBS)
+# add additional .o files on the line below (after main_01.o)
+$(EXENAME1): main_01.o pngrw.o utility.o kernel_01.o
+	$(COMPILER) $(LINKFLAGS) -o $(EXENAME1) $^ $(LIBS)
+
+$(EXENAME2): main_02.o pngrw.o utility.o kernel_02.o
+	$(COMPILER) $(LINKFLAGS) -o $(EXENAME2) $^ $(LIBS)
 
 #########################
 
 # add more .cu -> .o compile commands here
 
-kernel.o: kernel.cu ece408_final_gpu.h
+kernel_01.o: kernel_01_vanilla.cu ece408_final_gpu.h
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
-main.o: main.cu pngrw.h ece408_final_gpu.h
+kernel_02.o: kernel_02_cpu_boundary.cu ece408_final_gpu.h
+	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
+
+main_01.o: main_01_vanilla.cu pngrw.h ece408_final_gpu.h
+	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
+
+main_02.o: main_02_cpu_boundary.cu pngrw.h ece408_final_gpu.h
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
 pngrw.o: pngrw.cu pngrw.h
@@ -30,14 +40,17 @@ utility.o: utility.cu ece408_final_gpu.h
 #########################
 
 clean:
-	rm -fv *.o *output*.png $(EXENAME)
+	rm -fv *.o *output*.png $(EXENAME1) $(EXENAME2)
 
-run: $(EXENAME)
-	./$(EXENAME) $(ARGS)
+run_vanilla: $(EXENAME1)
+	./$(EXENAME1) $(ARGS)
 
-test: $(EXENAME)
-	/usr/local/cuda/bin/nvcc/cuda-memcheck ./$(EXENAME) $(ARGS)
+run_boundary: $(EXENAME2)
+	./$(EXENAME2) $(ARGS)
 
-valgrind: $(EXENAME) 
+test_vanilla: $(EXENAME1)
+	/usr/local/cuda/bin/nvcc/cuda-memcheck ./$(EXENAME1) $(ARGS)
+
+valgrind_vanilla: $(EXENAME1) 
 	echo "To Laura/Peter - valgrind will throw false positives on cuda or OpenMP code.  I will fix this later.  -Conor."
-	valgrind --leak-check=full ./$(EXENAME) $(ARGS)
+	valgrind --leak-check=full ./$(EXENAME1) $(ARGS)
