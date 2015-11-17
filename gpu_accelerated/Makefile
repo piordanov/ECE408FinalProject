@@ -1,9 +1,9 @@
-COMPILER=/usr/local/cuda/bin/nvcc
+COMPILER=nvcc # /usr/local/cuda/bin/nvcc for most machines, but nvcc for EWS
 EXENAME=life_gpu
 COMPILEFLAGS=-Xcompiler=-Wall,-Wfatal-errors -G -g
 LINKFLAGS=-Xcompiler=-Wall,-Wfatal-errors -G -g
 LIBS=-lpng
-ARGS=test_input_01.png output 20
+ARGS=16x16.png output 50
 
 all: $(EXENAME)
 

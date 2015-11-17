@@ -74,15 +74,17 @@ int main(int argc, char** argv)
         // error messages printed from inside pngrw_read_file()
         return -1;
     
-    if (width < 2)
+    if (width < 1)
     {
-        fprintf(stderr, "Error! %s must have a width > 1\n", argv[1]);
+        fprintf(stderr, "Error! %s must have a width >= 1\n", argv[1]);
+        delete[] cell_grid_read;
         return -1;
     }
     
-    if (height < 2)
+    if (height < 1)
     {
-        fprintf(stderr, "Error! %s must have a height > 1\n", argv[1]);
+        fprintf(stderr, "Error! %s must have a height >= 1\n", argv[1]);
+        delete[] cell_grid_read;
         return -1;
     }
     
@@ -126,7 +128,8 @@ int main(int argc, char** argv)
     
     printf
     (
-        "Success! Finished %u iterations in %lf seconds (%lf cells/sec)\n",
+        "Success! Finished %s ~ %u iterations in %lf seconds ~ %lf cells/sec\n",
+        argv[1],
         iterations,
         elapsed_sec,
         ((double)width * (double)height * (double)iterations) / elapsed_sec

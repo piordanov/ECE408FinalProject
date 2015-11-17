@@ -12,8 +12,8 @@
 #ifndef __HEADER_GUARD_ECE408_FINAL__
 #define __HEADER_GUARD_ECE408_FINAL__
 
-#define THREADS_PER_BLOCK_X 16
-#define THREADS_PER_BLOCK_Y 16
+#define THREADS_PER_BLOCK_X 32
+#define THREADS_PER_BLOCK_Y 32
 #define HALO 1
 
 /* utility.cpp */

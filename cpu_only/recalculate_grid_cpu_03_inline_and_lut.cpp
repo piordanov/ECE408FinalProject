@@ -137,24 +137,219 @@ void recalculate_grid_cpu
     unsigned height
 ){
     
-    // too lazy to support useless edge cases... but check for them at least
-    // if you want to add support for grids with a width or height of dimension 1,
-    // you can replace the error message with some specialized functions and return when done
-    if (width < 9 || height < 2)
-    {
-        fprintf(stderr, "Error! recalculate_grid_cpu() called with dimension < 2\n");
-        return;
-    }
-    
-    // below this line, the cell grid shall have minimum width 2 and height 2
-    
     unsigned bytes_per_row = (width - 1) / 8 + 1;
     
     unsigned char nw, n, ne;
     unsigned char w,  c, e;
     unsigned char sw, s, se;
+    
+    /* Handle awkward edge cases explicitly */
+    
+    // edge case 1 - cell grid has a zero dimension
+    if (width < 1)
+    {
+        fprintf(stderr, "Warning! recalculate_grid_cpu() called with width = 0\n");
+        return;
+    }
+    if (height < 1)
+    {
+        fprintf(stderr, "Warning! recalculate_grid_cpu() called with height = 0\n");
+        return;
+    }
+    
+    // used to zero-out the east edge of the grid when the byte is only 
+    // partially filled
+    unsigned east_mask = 0xFF >> ((8 - (width & 0x7)) & 0x7);
+    
+    // edge case 2 - cell grid is only one byte
+    if (bytes_per_row == 1 && height == 1)
+    {
+        output_cell_grid[0] = east_mask & generate_byte
+        (
+            0, 0, 0,
+            0, input_cell_grid[0], 0,
+            0, 0, 0
+        );
+        return;
+    }
+    
+    // edge case 3 - cell grid is a vertical column where height >= 2
+    if (bytes_per_row == 1)
+    {
+        output_cell_grid[0] = generate_byte
+        (
+            0, 0, 0,
+            0, input_cell_grid[0], 0,
+            0, input_cell_grid[1], 0
+        );
         
+        printf("\t[%u]\t%x --> %x\n", 0, input_cell_grid[0], output_cell_grid[0]);
+        for (unsigned iy = 1, bound = height - 1; iy < bound; iy++)
+        {
+            output_cell_grid[iy] = east_mask & generate_byte
+            (
+                0, input_cell_grid[iy - 1], 0,
+                0, input_cell_grid[iy], 0,
+                0, input_cell_grid[iy + 1], 0
+            );
+            printf("\t[%u]\t%x --> %x\n", iy, input_cell_grid[iy], output_cell_grid[iy]);
+        }
+        
+        output_cell_grid[height - 1] = generate_byte
+        (
+            0, input_cell_grid[height - 2], 0,
+            0, input_cell_grid[height - 1], 0,
+            0, 0, 0
+        );
+        printf("\t[%u]\t%x --> %x\n", height - 1, input_cell_grid[height - 1], output_cell_grid[height - 1]);
+        
+        return;
+        
+    }
+    
+    // edge case 4 - cell grid is a horizontal row where bytes_per_row >= 2
+    if (height == 1)
+    {
+        output_cell_grid[0] = generate_byte
+        (
+            0, 0, 0,
+            0, input_cell_grid[0], input_cell_grid[1],
+            0, 0, 0
+        );
+        
+        for (unsigned ix = 1, bound = bytes_per_row - 1; ix < bound; ix++)
+            output_cell_grid[ix] = generate_byte
+            (
+                0, 0, 0,
+                input_cell_grid[ix - 1], input_cell_grid[ix], input_cell_grid[ix + 1],
+                0, 0, 0
+            );
+        
+        output_cell_grid[bytes_per_row - 1] = generate_byte
+        (
+            0, 0, 0,
+            input_cell_grid[bytes_per_row - 2], input_cell_grid[bytes_per_row - 1], 0,
+            0, 0, 0
+        );
+        
+        return;
+        
+    }
+    
+    // below this line, bytes_per_row >= 2 and height >= 2 guarenteed
+    
+    /* Compute bytes on the perimeter of the grid */
+    
+    // compute nw corner
+    output_cell_grid[0] = generate_byte
+    (
+        0, 0, 0,
+        0, input_cell_grid[0], input_cell_grid[1],
+        0, input_cell_grid[bytes_per_row], input_cell_grid[bytes_per_row + 1]
+    );
+    
+    // compute ne corner
+    output_cell_grid[bytes_per_row - 1] = east_mask & generate_byte
+    (
+        0, 0, 0,
+        input_cell_grid[bytes_per_row - 2], input_cell_grid[bytes_per_row - 1], 0,
+        0, 0, 0
+    );
+    
+    // compute sw corner
+    const unsigned char* input_almost_bottom = input_cell_grid + bytes_per_row * (height - 2);
+    unsigned char* output_bottom = output_cell_grid + bytes_per_row * (height - 1);
+    // beware: subtracting values from pointers is a bad idea since the pointers
+    // are generally 64 bits but the offset isn't always sign extended
+    output_bottom[0] = generate_byte
+    (
+        0, input_almost_bottom[0], input_almost_bottom[1],
+        0, input_almost_bottom[bytes_per_row], input_almost_bottom[bytes_per_row + 1],
+        0, 0, 0
+    );
+    
+    // compute se corner
+    output_bottom[bytes_per_row - 1] = east_mask & generate_byte
+    (
+        input_almost_bottom[bytes_per_row - 2], input_almost_bottom[bytes_per_row - 1], 0,
+        input_almost_bottom[2 * bytes_per_row - 2], input_almost_bottom[2 * bytes_per_row - 1], 0,
+        0, 0, 0
+    );
+    
+    // compute north and south edges (no corners)
+    for (unsigned ix = 1, bound = bytes_per_row - 1; ix < bound; ix++)
+    {
+        
+        // north edge
+        output_cell_grid[ix] = generate_byte
+        (
+            0,
+            0,
+            0,
+            input_cell_grid[ix - 1],
+            input_cell_grid[ix],
+            input_cell_grid[ix + 1],
+            input_cell_grid[ix + bytes_per_row - 1],
+            input_cell_grid[ix + bytes_per_row],
+            input_cell_grid[ix + bytes_per_row + 1]
+        );
+        
+        // south edge
+        output_bottom[ix] = generate_byte
+        (
+            input_almost_bottom[ix - 1],
+            input_almost_bottom[ix],
+            input_almost_bottom[ix + 1],
+            input_almost_bottom[ix + bytes_per_row - 1],
+            input_almost_bottom[ix + bytes_per_row],
+            input_almost_bottom[ix + bytes_per_row + 1],
+            0,
+            0,
+            0
+        );
+        
+    }
+    
+    // compute west and east edges (no corners)
+    for
+    (
+        unsigned iy = bytes_per_row, bound = bytes_per_row * (height - 1);
+        iy < bound;
+        iy += bytes_per_row
+    ){
+        
+        // west edge
+        output_cell_grid[iy] = generate_byte
+        (
+            0,
+            input_cell_grid[iy - bytes_per_row],
+            input_cell_grid[iy - bytes_per_row + 1],
+            0,
+            input_cell_grid[iy],
+            input_cell_grid[iy + 1],
+            0,
+            input_cell_grid[iy + bytes_per_row],
+            input_cell_grid[iy + bytes_per_row + 1]
+        );
+        
+        // east edge
+        output_cell_grid[iy + bytes_per_row - 1] = east_mask & generate_byte
+        (
+            input_cell_grid[iy - 2],
+            input_cell_grid[iy - 1],
+            0,
+            input_cell_grid[iy + bytes_per_row - 2],
+            input_cell_grid[iy + bytes_per_row - 1],
+            0,
+            input_cell_grid[iy + 2 * bytes_per_row - 2],
+            input_cell_grid[iy + 2 * bytes_per_row - 1],
+            0
+        );
+        
+    }
+    
     // compute main body - optimizing out boundary checks ;)
+    // this is the only part of the code that's actually interesting
     // ix and iy select the byte being written
     for (unsigned iy = 1, bound_x = bytes_per_row - 1, bound_y = height - 1; iy < bound_y; iy++)
     {

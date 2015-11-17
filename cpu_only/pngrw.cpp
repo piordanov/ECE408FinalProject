@@ -199,6 +199,7 @@ unsigned pngrw_read_file
                 // 1 bit per pixel (monochrome image)
                 case 1:
                 {
+                    
                     for (unsigned iy = 0; iy < *height; iy++)
                     {
                         // read a row of pixels using libpng
@@ -213,7 +214,7 @@ unsigned pngrw_read_file
                         
                         // twist bits around
                         unsigned char* output_base = *cell_grid + iy * padded_row_bytes;
-                        for (unsigned ix = 0, bound = (*width - 1) / 8 + 1; ix < bound; ix++)
+                        for (unsigned ix = 0; ix < row_bytes; ix++)
                         {
                             
                             unsigned char read_byte = row_buff[ix];
@@ -234,6 +235,11 @@ unsigned pngrw_read_file
                             else
                                 output_base[ix] = write_byte;
                         }
+                        
+                        // if the number of pixels in a row is not divisible by 8
+                        // then zero out invalid bits at the end of the row
+                        if ((*width % 8) != 0)
+                            output_base[row_bytes - 1] &= 0xFF >> (8 - (*width % 8));
                         
                     }
                     
