@@ -3,7 +3,7 @@
  *  Calls:                  none
  *  Called by:              main.cpp
  *  Associated Header:      ece408_final_gpu.h
- *  Date created:           Wed Nov 11 2015
+ *  Date created:           Mon Nov 16 2015
  *  Engineers:              Peter Iordanov, Laura Galbraith, Conor Gardner
  *  Compiler:               nvcc
  *  Target OS:              Ubuntu Linux 14.04
