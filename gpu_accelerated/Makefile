@@ -30,16 +30,16 @@ utility.o: utility.cu ece408_final_gpu.h
 #########################
 
 clean:
-	rm -fv *.o *output*.png $(EXENAME)
+	rm -fv *.o *output*.png diff.png $(EXENAME)
 
 run: $(EXENAME)
 	./$(EXENAME) $(ARGS)
-	rm -f output*.png
+	rm -f output*.png diff.png
 	compare output_01.png verify_256x256.png diff.png
 
 memcheck: $(EXENAME)
 	/usr/local/cuda/bin/cuda-memcheck ./$(EXENAME) $(ARGS)
-	rm -f output*.png
+	rm -f output*.png diff.png
 	compare output_01.png verify_256x256.png diff.png
 
 valgrind: $(EXENAME) 
