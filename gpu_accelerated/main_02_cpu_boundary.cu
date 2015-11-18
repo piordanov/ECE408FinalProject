@@ -56,6 +56,8 @@ int main(int argc, char** argv)
     cudaMalloc(&read_grid_d, grid_bytes * sizeof(char));
     cudaMalloc(&write_grid_d, grid_bytes * sizeof(char));
     
+    double start = get_timestamp();    
+    
     // blocking copy initial grid to GPU
     cudaMemcpy(read_grid_d, send_grid_h, grid_bytes * sizeof(char), cudaMemcpyHostToDevice);
 
@@ -80,26 +82,38 @@ int main(int argc, char** argv)
         (height - 1) / THREADS_PER_BLOCK_Y + 1,
         1
     );
+    
     for (unsigned gen_ix = 0; gen_ix < iterations; gen_ix++)
     {
         
         output_filename.next_filename();
-        kernel<<<threads_per_block, blocks_per_grid>>>(read_grid_d, write_grid_d, width, height);
+        kernel<<<blocks_per_grid, threads_per_block>>>(read_grid_d, write_grid_d, width, height);
         cudaMemcpy(recv_grid_h, write_grid_d, grid_bytes * sizeof(char), cudaMemcpyDeviceToHost);
         pngrw_write_file(output_filename.str, recv_grid_h, width, height);
         
         unsigned char* swap = read_grid_d;
         read_grid_d = write_grid_d;
         write_grid_d = swap;
-
+        
     }
+    
+    double elapsed_sec = get_timestamp() - start;
     
     /* Stage 4 - cleanup */
     
     // cleanup
-    cudaFree(recv_grid_h);
+    cudaFreeHost(recv_grid_h);
     cudaFree(read_grid_d);
     cudaFree(write_grid_d);
+    
+    printf
+    (
+        "Success! Finished %s ~ %u iterations in %lf seconds ~ %lf cells/sec\n",
+        argv[1],
+        iterations,
+        elapsed_sec,
+        ((double)width * (double)height * (double)iterations) / elapsed_sec
+    );    
     
     return 0;
     

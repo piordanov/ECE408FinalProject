@@ -1,34 +1,24 @@
-COMPILER=nvcc # /usr/local/cuda/bin/nvcc for most machines, but nvcc for EWS
-EXENAME1=life_gpu_01
-EXENAME2=life_gpu_02
-COMPILEFLAGS=-Xcompiler=-Wall,-Wfatal-errors -G -g
-LINKFLAGS=-Xcompiler=-Wall,-Wfatal-errors -G -g
+COMPILER=/usr/local/cuda/bin/nvcc
+EXENAME=life_gpu
+COMPILEFLAGS=-Xcompiler=-Wall,-Wfatal-errors -g -G
+LINKFLAGS=-Xcompiler=-Wall,-Wfatal-errors -g -G
 LIBS=-lpng
-ARGS=256x256.png output 10
+ARGS=4096x4096.png output 1024
 
-all: $(EXENAME1) $(EXENAME2)
+all: $(EXENAME)
 
 # add additional .o files on the line below (after main_01.o)
-$(EXENAME1): main_01.o pngrw.o utility.o kernel_01.o
-	$(COMPILER) $(LINKFLAGS) -o $(EXENAME1) $^ $(LIBS)
-
-$(EXENAME2): main_02.o pngrw.o utility.o kernel_02.o
-	$(COMPILER) $(LINKFLAGS) -o $(EXENAME2) $^ $(LIBS)
+$(EXENAME): main.o kernel.o pngrw.o utility.o
+	$(COMPILER) $(LINKFLAGS) -o $(EXENAME) $^ $(LIBS)
 
 #########################
 
 # add more .cu -> .o compile commands here
 
-kernel_01.o: kernel_01_vanilla.cu ece408_final_gpu.h
+kernel.o: kernel_01*.cu ece408_final_gpu.h
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
-kernel_02.o: kernel_02_cpu_boundary.cu ece408_final_gpu.h
-	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
-
-main_01.o: main_01_vanilla.cu pngrw.h ece408_final_gpu.h
-	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
-
-main_02.o: main_02_cpu_boundary.cu pngrw.h ece408_final_gpu.h
+main.o: main_01*.cu pngrw.h ece408_final_gpu.h
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
 pngrw.o: pngrw.cu pngrw.h
@@ -40,17 +30,18 @@ utility.o: utility.cu ece408_final_gpu.h
 #########################
 
 clean:
-	rm -fv *.o *output*.png $(EXENAME1) $(EXENAME2)
+	rm -fv *.o *output*.png $(EXENAME)
 
-run_vanilla: $(EXENAME1)
-	./$(EXENAME1) $(ARGS)
+run: $(EXENAME)
+	./$(EXENAME) $(ARGS)
+	rm -f output*.png
+	compare output_01.png verify_256x256.png diff.png
 
-run_boundary: $(EXENAME2)
-	./$(EXENAME2) $(ARGS)
+memcheck: $(EXENAME)
+	/usr/local/cuda/bin/cuda-memcheck ./$(EXENAME) $(ARGS)
+	rm -f output*.png
+	compare output_01.png verify_256x256.png diff.png
 
-test_vanilla: $(EXENAME1)
-	/usr/local/cuda/bin/nvcc/cuda-memcheck ./$(EXENAME1) $(ARGS)
+valgrind: $(EXENAME) 
+	@echo "Error: Use make -j memcheck instead"
 
-valgrind_vanilla: $(EXENAME1) 
-	echo "To Laura/Peter - valgrind will throw false positives on cuda or OpenMP code.  I will fix this later.  -Conor."
-	valgrind --leak-check=full ./$(EXENAME1) $(ARGS)
