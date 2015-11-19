@@ -84,7 +84,7 @@ int main(int argc, char** argv)
     {
         
         output_filename.next_filename();
-        kernel<<<threads_per_block, blocks_per_grid>>>(read_grid_d, write_grid_d, width, height);
+        kernel<<<blocks_per_grid, threads_per_block>>>(read_grid_d, write_grid_d, width, height);
         cudaMemcpy(recv_grid_h, write_grid_d, grid_bytes * sizeof(char), cudaMemcpyDeviceToHost);
         pngrw_write_file(output_filename.str, recv_grid_h, width, height);
         

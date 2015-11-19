@@ -1,10 +1,10 @@
 COMPILER=nvcc # /usr/local/cuda/bin/nvcc for most machines, but nvcc for EWS
 EXENAME1=life_gpu_01
 EXENAME2=life_gpu_02
-COMPILEFLAGS=-Xcompiler=-Wall,-Wfatal-errors -G -g
-LINKFLAGS=-Xcompiler=-Wall,-Wfatal-errors -G -g
+COMPILEFLAGS=-Xcompiler=-Wall,-Wfatal-errors -g -G
+LINKFLAGS=-Xcompiler=-Wall,-Wfatal-errors -g -G
 LIBS=-lpng
-ARGS=256x256.png output 10
+ARGS=4096x4096.png output 10
 
 all: $(EXENAME1) $(EXENAME2)
 
@@ -51,6 +51,5 @@ run_boundary: $(EXENAME2)
 test_vanilla: $(EXENAME1)
 	/usr/local/cuda/bin/nvcc/cuda-memcheck ./$(EXENAME1) $(ARGS)
 
-valgrind_vanilla: $(EXENAME1) 
-	echo "To Laura/Peter - valgrind will throw false positives on cuda or OpenMP code.  I will fix this later.  -Conor."
-	valgrind --leak-check=full ./$(EXENAME1) $(ARGS)
+valgrind_vanilla: $(EXENAME1)
+	@echo "Error: Use make -j memcheck instead"

@@ -1,9 +1,9 @@
 /*  Project:                ECE 408 Final Project
- *  File Name:              kernel.cu
+ *  File Name:              kernel_02_cpu_boundary.cu
  *  Calls:                  none
- *  Called by:              main.cpp
+ *  Called by:              main_02_cpu_boundary.cu
  *  Associated Header:      ece408_final_gpu.h
- *  Date created:           Mon Nov 16 2015
+ *  Date created:           Tues Nov 17 2015
  *  Engineers:              Peter Iordanov, Laura Galbraith, Conor Gardner
  *  Compiler:               nvcc
  *  Target OS:              Ubuntu Linux 14.04
@@ -137,68 +137,23 @@ __global__ void kernel
     unsigned bytes_per_row = (width - 1) / 8 + 1;
     
     // This is the (x,y) coordinate of the char in the grid this thread handles
-    unsigned ix = (blockIdx.x * blockDim.x) + threadIdx.x;
-    unsigned iy = (blockIdx.y * blockDim.y) + threadIdx.y;
-
-    unsigned char nw, n, ne;
-    unsigned char w,  c, e;
-    unsigned char sw, s, se;
+    // Since boundary rows are computed by the CPU, fewer threads are created
+    // so all thread indices are off by 1 in both the x and y direction
+    unsigned ix = (blockIdx.x * blockDim.x) + threadIdx.x + 1;
+    unsigned iy = (blockIdx.y * blockDim.y) + threadIdx.y + 1;
 
     const unsigned char* w_char = read_grid_d + (iy * bytes_per_row) + ix - 1;
     const unsigned char* nw_char = w_char - bytes_per_row;
     const unsigned char* sw_char = w_char + bytes_per_row;
 
-    if (ix == 0 || iy == 0 || ix > bytes_per_row || iy > height)
-        nw = 0x0;
-    else
-        nw = nw_char[0];
-
-    if (iy == 0 || ix >= bytes_per_row || iy > height) // ix can't be <0
-        n = 0x0;
-    else
-        n = nw_char[1];
-
-    if (iy == 0 || ix >= bytes_per_row - 1 || iy > height) // ix can't be <0
-        ne = 0x0;
-    else
-        ne = nw_char[2];
-
-    if (ix == 0 || ix > bytes_per_row || iy >= height) // iy can't be <0
-        w = 0x0;
-    else
-        w = w_char[0];
-
-    // This check is just to make sure we don't read invalid memory
-    if (ix >= bytes_per_row || iy >= height) // ix and iy can't be <0
-        c = 0x0;
-    else
-        c = w_char[1];
-
-    if (ix >= bytes_per_row - 1 || iy >= height) // ix and iy can't be <0
-        e = 0x0;
-    else
-        e = w_char[2];
-
-    if (ix == 0 || ix > bytes_per_row || iy >= height - 1) // iy can't be <0
-        sw = 0x0;
-    else
-        sw = sw_char[0];
-
-    if (ix >= bytes_per_row || iy >= height - 1) // ix and iy can't be <0
-        s = 0x0;
-    else
-        s = sw_char[1];
-
-    if (ix >= bytes_per_row - 1 || iy >= height - 1)  // ix and iy can't be <0
-        se = 0x0;
-    else
-        se = sw_char[2];
-
     // Compute and write the output char
-    if (ix < bytes_per_row && iy < height)
+    // Make sure you're not writing onto the boundary rows
+    if (ix < bytes_per_row - 1 && iy < height - 1)
     {
         write_grid_d[iy * bytes_per_row + ix]
-                    = generate_byte(nw, n, ne, w, c, e, sw, s, se);
+                    = generate_byte(nw_char[0], nw_char[1], nw_char[2],
+                                    w_char[0], w_char[1], w_char[2],
+                                    sw_char[0], sw_char[1], sw_char[2]);
     }
 
 }
