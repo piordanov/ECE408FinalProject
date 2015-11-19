@@ -1,8 +1,8 @@
 COMPILER=nvcc # /usr/local/cuda/bin/nvcc for most machines, but nvcc for EWS
 EXENAME1=life_gpu_01
 EXENAME2=life_gpu_02
-COMPILEFLAGS=-Xcompiler=-Wall,-Wfatal-errors -g -G
-LINKFLAGS=-Xcompiler=-Wall,-Wfatal-errors -g -G
+COMPILEFLAGS=-Xcompiler=-Wall,-Wfatal-errors -g -G # Additional option --std=c++11 can be used on some machines
+LINKFLAGS=-Xcompiler=-Wall,-Wfatal-errors -g -G # Additional option --std=c++11 can be used on some machines
 LIBS=-lpng
 ARGS=256x256.png output 10
 
@@ -43,17 +43,17 @@ clean:
 	rm -fv *.o *output*.png diff.png $(EXENAME1) $(EXENAME2)
 
 run: $(EXENAME1)
+	rm -f output*.png diff.png
 	./$(EXENAME1) $(ARGS)
 	compare output_01.png verify_256x256.png diff.png
-	rm -f output*.png
 
 run_boundary: $(EXENAME2)
 	./$(EXENAME2) $(ARGS)
 
 memcheck: $(EXENAME1)
+	rm -f output*.png diff.png
 	/usr/local/cuda/bin/cuda-memcheck ./$(EXENAME1) $(ARGS)
 	compare output_01.png verify_256x256.png diff.png
-	rm -f output*.png
 
 valgrind: $(EXENAME1) 
 	@echo "Error: Use make -j memcheck instead"
