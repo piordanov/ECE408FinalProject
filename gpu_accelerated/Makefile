@@ -1,9 +1,9 @@
 COMPILER=/usr/local/cuda/bin/nvcc
 EXENAME=life_gpu
-COMPILEFLAGS=-Xcompiler=-Wall,-Wfatal-errors -g -G
-LINKFLAGS=-Xcompiler=-Wall,-Wfatal-errors -g -G
+COMPILEFLAGS=-Xcompiler=-Wall,-Wfatal-errors --std=c++11 -g -G
+LINKFLAGS=-Xcompiler=-Wall,-Wfatal-errors --std=c++11 -g -G
 LIBS=-lpng
-ARGS=4096x4096.png output 1024
+ARGS=256x256.png output 256
 
 all: $(EXENAME)
 
@@ -18,7 +18,7 @@ $(EXENAME): main.o kernel.o pngrw.o utility.o
 kernel.o: kernel_01*.cu ece408_final_gpu.h
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
-main.o: main_01*.cu pngrw.h ece408_final_gpu.h
+main.o: main_05*.cu pngrw.h ece408_final_gpu.h
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
 pngrw.o: pngrw.cu pngrw.h
@@ -33,13 +33,13 @@ clean:
 	rm -fv *.o *output*.png diff.png $(EXENAME)
 
 run: $(EXENAME)
-	./$(EXENAME) $(ARGS)
 	rm -f output*.png diff.png
+	./$(EXENAME) $(ARGS)
 	compare output_01.png verify_256x256.png diff.png
 
 memcheck: $(EXENAME)
-	/usr/local/cuda/bin/cuda-memcheck ./$(EXENAME) $(ARGS)
 	rm -f output*.png diff.png
+	/usr/local/cuda/bin/cuda-memcheck ./$(EXENAME) $(ARGS)
 	compare output_01.png verify_256x256.png diff.png
 
 valgrind: $(EXENAME) 
