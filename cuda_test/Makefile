@@ -1,4 +1,4 @@
-COMPILER=nvcc # /usr/local/cuda/bin/nvcc on most machines, but not EWS machines
+COMPILER=/usr/local/cuda-7.0/bin/nvcc # on most machines, but not EWS machines
 EXENAME=cuda_test
 COMPILEFLAGS=-Xcompiler -Wall
 LINKFLAGS=-Xcompiler -Wall

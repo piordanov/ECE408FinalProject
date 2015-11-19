@@ -285,6 +285,8 @@ int main(int argc, char** argv)
     cudaMalloc(&read_grid_d, grid_bytes * sizeof(char));
     cudaMalloc(&write_grid_d, grid_bytes * sizeof(char));
     
+    double start = get_timestamp();    
+    
     // blocking copy initial grid to GPU
     cudaMemcpy(read_grid_d, send_grid_h, grid_bytes * sizeof(char), cudaMemcpyHostToDevice);
 
@@ -308,6 +310,7 @@ int main(int argc, char** argv)
         (body_chars_y - 1) / THREADS_PER_BLOCK_Y + 1,
         1
     );
+    
     for (unsigned gen_ix = 0; gen_ix < iterations; gen_ix++)
     {
         
@@ -337,6 +340,8 @@ int main(int argc, char** argv)
 
     }
     
+    double elapsed_sec = get_timestamp() - start;
+    
     /* Stage 4 - cleanup */
     
     // cleanup
@@ -346,6 +351,15 @@ int main(int argc, char** argv)
 
     // we're done with the CPU's copy of the input grid
     delete[] send_grid_h;
+    
+    printf
+    (
+        "Success! Finished %s ~ %u iterations in %lf seconds ~ %lf cells/sec\n",
+        argv[1],
+        iterations,
+        elapsed_sec,
+        ((double)width * (double)height * (double)iterations) / elapsed_sec
+    );    
     
     return 0;
     
