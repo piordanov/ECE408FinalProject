@@ -14,7 +14,6 @@
 
 #define THREADS_PER_BLOCK_X 16
 #define THREADS_PER_BLOCK_Y 16
-#define HALO 1
 
 /* utility.cpp */
 double get_timestamp();

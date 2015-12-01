@@ -13,6 +13,7 @@
  *                          (ECE 408) */
 
 #include <png.h> // yucky standard linux png include
+#include <mutex>
 #include "pngrw.h" // custom wrapper
 
 /* See pngrw.h for documentation */
@@ -33,7 +34,7 @@ unsigned pngrw_read_file
     // initialize libpng and bind it to a png file on the filesystem
     png_structp libpng_read_struct;
     png_infop libpng_info_struct;
-
+    
     // open png file for reading in binary format
     FILE* file = fopen(filename, "rb");
     if (file == NULL)
@@ -341,13 +342,19 @@ bool pngrw_write_file
     
     /* Yucky libpng initialization */
     
-    // open file for reading in binary format
+    // open file for writing in binary format
     FILE* file = fopen(filename, "wb");
     if (file == NULL)
     {
         fprintf(stderr, "Error (%s) failed to open file for writing\n", filename);
         return false;
     }
+    
+    // buffer the entire PNG in RAM and write it all in one go
+    // this is helpful when multiple threads are writing PNGs simultaniously
+    unsigned row_bytes = (width - 1) / 8 + 1;
+    char *write_back_buff = new char[row_bytes * height * sizeof(char)];
+    setvbuf(file, write_back_buff, _IOFBF, row_bytes * height * sizeof(char));
     
     // set error handling.  This registers a way to get back here if an error
     // occurrs.  Had we not set this, libpng would abort the whole program
@@ -380,6 +387,8 @@ bool pngrw_write_file
         png_destroy_write_struct(&write_struct, NULL);
         return false;
     }
+    
+    png_set_compression_level(write_struct, 3);
     
     png_init_io(write_struct, file);
     
@@ -418,8 +427,6 @@ bool pngrw_write_file
 		return false;
 	}
     
-    unsigned row_bytes = (width - 1) / 8 + 1;
-    
     // round up to nearest multiple of pad_width
     unsigned padded_row_bytes = row_bytes;
     unsigned mod = row_bytes % pad_width;
@@ -455,7 +462,15 @@ bool pngrw_write_file
     png_write_end(write_struct, NULL);
     png_destroy_info_struct(write_struct, &info_struct);
     png_destroy_write_struct(&write_struct, NULL);
+    
+    // when fclose() is called, the write_back buffer will be flushed to the file system (disk)
+    // only let one thread have access to the disk at a time
+    static std::mutex m;
+    m.lock();
     fclose(file);
+    m.unlock();
+    
+    delete[] write_back_buff;
     
     return true;
     

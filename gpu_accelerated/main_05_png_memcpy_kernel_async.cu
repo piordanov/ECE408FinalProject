@@ -138,8 +138,6 @@ int main(int argc, char** argv)
             output_filename.str, recv_grid_h[encoder_ix], width, height, 1
         );
         
-//        pngrw_write_file(output_filename.str, recv_grid_h[encoder_ix], width, height);
-        
         swap_buffers(&read_grid_d, &write_grid_d);
         
     }
