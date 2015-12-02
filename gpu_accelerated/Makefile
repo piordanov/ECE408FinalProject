@@ -15,7 +15,7 @@ $(EXENAME): main.o kernel.o pngrw.o utility.o
 
 # add more .cu -> .o compile commands here
 
-kernel.o: kernel_08*.cu ece408_final_gpu.h
+kernel.o: kernel_09*.cu ece408_final_gpu.h
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
 main.o: main_05*.cu pngrw.h ece408_final_gpu.h
