@@ -3,7 +3,7 @@ EXENAME=life_gpu
 COMPILEFLAGS=-Xcompiler=-Wall,-Wfatal-errors -g -G --std=c++11
 LINKFLAGS=-Xcompiler=-Wall,-Wfatal-errors -g -G --std=c++11
 LIBS=-lpng
-ARGS=256x256.png output 256
+ARGS=680x384.png output 256
 
 all: $(EXENAME)
 
@@ -35,12 +35,12 @@ clean:
 run: $(EXENAME)
 	rm -f output*.png diff.png
 	./$(EXENAME) $(ARGS)
-	compare output_001.png verify_256x256.png diff.png
+#	compare output_001.png verify_256x256.png diff.png
 
 memcheck: $(EXENAME)
 	rm -f output*.png diff.png
 	/usr/local/cuda/bin/cuda-memcheck ./$(EXENAME) $(ARGS)
-	compare output_001.png verify_256x256.png diff.png
+#	compare output_001.png verify_256x256.png diff.png
 
 valgrind: $(EXENAME) 
 	@echo "Error: Use make -j memcheck instead"

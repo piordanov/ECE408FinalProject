@@ -32,6 +32,7 @@ class output_filename_t
         ~output_filename_t();
         
         bool next_filename();
+        inline unsigned get_len() { return len; }
         
     private:
         

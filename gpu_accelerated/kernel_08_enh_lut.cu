@@ -168,7 +168,7 @@ __global__ void kernel
     // do not try to read shared memory until it's fully initialized
     __syncthreads();
 
-    if (global_write_ix < bytes_per_row & global_write_iy < height)
+    if ((global_write_ix < bytes_per_row) & (global_write_iy < height))
     {
         
         const unsigned char* nw_row = input_s + threadIdx.y * (THREADS_PER_BLOCK_X + 2);

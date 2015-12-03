@@ -49,12 +49,12 @@ output_filename_t::output_filename_t(const char* output_pattern, unsigned iterat
     
     // calculate the length of the final filename string
     unsigned prefix_len = strlen(output_pattern);
-    unsigned str_len =
+    len =
         prefix_len         // "output_pattern
       + digits             //  0000
       + 6;                 //  _ .png \0"
     
-    str = new char[str_len];
+    str = new char[len];
     
     // concatenate pieces to form output string
     memcpy(str, output_pattern, prefix_len * sizeof(char));

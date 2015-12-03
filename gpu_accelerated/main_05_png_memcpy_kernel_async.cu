@@ -73,11 +73,11 @@ int main(int argc, char** argv)
     dim3 threads_per_block(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y, 1);
     dim3 blocks_per_grid
     (
-        (width / 8 - 1) / THREADS_PER_BLOCK_X + 1,
+        (width - 1) / (THREADS_PER_BLOCK_X * 8) + 1,
         (height - 1) / THREADS_PER_BLOCK_Y + 1,
         1
     );
-
+    
     cudaMemcpy(read_grid_d, send_grid_h, grid_bytes * sizeof(char), cudaMemcpyHostToDevice);
     kernel<<<blocks_per_grid, threads_per_block>>>(read_grid_d, write_grid_d, width, height);
     cudaDeviceSynchronize();
@@ -97,6 +97,8 @@ int main(int argc, char** argv)
     // generates a name such as output_000.png on the heap
     // if argv[2] = "output" and 99 < iterations < 1000, for example
     output_filename_t output_filename(argv[2], iterations);
+    unsigned filename_len = output_filename.get_len();
+    char thread_filenames[PNG_THREADS][filename_len + 1];
     
     cudaStream_t kernel_stream;
     cudaStream_t memcpy_stream;
@@ -104,7 +106,7 @@ int main(int argc, char** argv)
     cudaStreamCreate(&memcpy_stream);
     
     std::thread encoder[PNG_THREADS];
-
+    
     for (unsigned gen_ix = 2; gen_ix < iterations; gen_ix++)
     {
         
@@ -114,6 +116,10 @@ int main(int argc, char** argv)
             <<<blocks_per_grid, threads_per_block, 0, kernel_stream>>>
             (read_grid_d, write_grid_d, width, height);
         
+        if (encoder[encoder_ix].joinable())
+            // if that CPU thread was already doing some work, wait for it to finish
+            encoder[encoder_ix].join();
+
         // copy result from *previous* kernel launch in parallel with above kernel execution
         cudaMemcpyAsync
         (
@@ -127,15 +133,15 @@ int main(int argc, char** argv)
         cudaDeviceSynchronize();
         
         output_filename.next_filename();
+        memcpy(&(thread_filenames[encoder_ix][0]), output_filename.str, filename_len + 1);
+        
+//        pngrw_write_file(thread_filenames[encoder_ix], recv_grid_h[encoder_ix], width, height, 1);
         
         // spawn a seperate CPU thread to do the PNG encoding
-        if (encoder[encoder_ix].joinable())
-            // if that CPU thread was already doing some work, wait for it to finish
-            encoder[encoder_ix].join();
         encoder[encoder_ix] = std::thread
         (
             pngrw_write_file,
-            output_filename.str, recv_grid_h[encoder_ix], width, height, 1
+            &(thread_filenames[encoder_ix][0]), recv_grid_h[encoder_ix], width, height, 1
         );
         
         swap_buffers(&read_grid_d, &write_grid_d);
