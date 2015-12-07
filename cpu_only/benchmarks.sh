@@ -3,7 +3,13 @@ OUTFILE=benchmarks.txt
 
 echo "" > $OUTFILE
 
-for INFILE in 16x16.png 256x256.png 4096x4096.png
+for INFILE in \
+    256x256_dense.png \
+    512x512_dense.png \
+    1024x1024_dense.png \
+    256x256_sparse.png \
+    512x512_sparse.png \
+    1024x1024_sparse.png 
 do
     for IX in 1 2 3 4 5
     do

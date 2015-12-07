@@ -21,7 +21,7 @@ main.o: main.cpp ece408_final_cpu.h
 pngrw.o: pngrw.cpp pngrw.h
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
-recalculate_grid_cpu.o: recalculate_grid_cpu_03*.cpp
+recalculate_grid_cpu.o: 04*.cpp
 	$(COMPILER) $(COMPILEFLAGS) -c -o $@ $<
 
 utility.o: utility.cpp
